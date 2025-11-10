@@ -158,24 +158,152 @@ cd frontend && npm install && npm run dev
 
 이 프로젝트는 **학습용 프로젝트**입니다. 완성된 코드를 그대로 실행하는 것보다, **직접 구현**하면서 배우는 것을 권장합니다.
 
-### 학습 방법
+### 🎯 학습 방법
 
-1. **[Howtomake.md](./Howtomake.md)** 파일을 열어보세요
-2. 단계별 가이드를 따라 처음부터 구현해보세요
-3. 막히는 부분이 있으면 완성된 코드를 참고하세요
-4. 힌트가 있는 파일들 (TODO 주석)을 보고 직접 코드를 작성해보세요
+1. **[Howtomake.md](./Howtomake.md)** 파일의 단계별 가이드를 따라 처음부터 구현
+2. 힌트 주석(TODO)이 있는 파일들을 열어 직접 작성
+3. 막히면 **Services 폴더**의 완성된 코드를 참고
+4. 에러가 나면 오류 해결법 섹션을 확인
 
-### 힌트가 있는 파일들
+---
 
-#### Backend
+## 🔨 구현해야 할 부분 (TODO 주석 위치)
 
-- `backend/src/controllers/*` - 컨트롤러 로직
-- `backend/src/routes/*` - 라우터 설정
+### Backend - Controllers (비즈니스 로직)
 
-#### Frontend
+모든 함수가 **힌트 주석**만 있고 구현이 필요합니다:
 
-- `frontend/src/components/forms/*` - 폼 컴포넌트
-- `frontend/src/components/pages/*` - 페이지 컴포넌트
+#### 📄 `backend/src/controllers/authController.js`
+
+```javascript
+exports.signup = async (req, res) => {
+  // TODO: 회원가입 로직을 구현하세요
+  // 힌트: req.body에서 email, password, name 추출
+  // 참고: authService.signup 호출
+};
+```
+
+**참고할 파일**: `backend/src/services/authService.js` (완성된 코드)
+
+#### 📄 `backend/src/controllers/productController.js`
+
+- `createProduct` - 상품 생성
+- `getProducts` - 상품 목록 조회
+- `getProductById` - 특정 상품 조회
+- `updateProduct` - 상품 수정
+- `deleteProduct` - 상품 삭제
+
+**참고**: `backend/src/services/productService.js`
+
+#### 📄 `backend/src/controllers/cartController.js`
+
+- `addToCart` - 장바구니 추가
+- `getCartItems` - 장바구니 조회
+- `updateCartItem` - 수량 수정
+- `removeFromCart` - 상품 제거
+- `clearCart` - 장바구니 비우기
+
+**참고**: `backend/src/services/cartService.js` (상세한 주석 포함!)
+
+#### 📄 `backend/src/controllers/userController.js`
+
+- `getMe` - 현재 사용자 정보 조회
+
+**참고**: `backend/src/services/userService.js`
+
+---
+
+### Backend - Routes (라우터 설정)
+
+각 라우트에 **컨트롤러 함수를 연결**해야 합니다:
+
+#### 📄 `backend/src/routes/authRoutes.js`
+
+```javascript
+// @route   POST /api/auth/signup
+// @body    { email: string, password: string, name: string }
+router.post("/signup"); // ← authController.signup 추가
+```
+
+**힌트**: 주석에 어떤 데이터를 보내야 하는지 명시되어 있습니다!
+
+다른 Routes 파일도 동일한 패턴입니다.
+
+---
+
+### Frontend - Forms (폼 컴포넌트)
+
+**상태 관리**와 **이벤트 핸들러**를 구현해야 합니다:
+
+#### 📄 `frontend/src/components/forms/LoginForm.tsx`
+
+```typescript
+// TODO: 상태 관리를 위한 useState 설정
+// 힌트: email, password, error, loading 필요
+
+const handleLogin = async (e: React.FormEvent) => {
+  // TODO: 로그인 핸들러 구현
+  // 힌트: authApi.login() 호출
+};
+```
+
+**참고**:
+
+- `frontend/src/lib/api.ts` - API 호출 함수
+- `frontend/src/lib/helpers.ts` - validation, tokenUtils
+
+#### 📄 `frontend/src/components/forms/SignupForm.tsx`
+
+- useState로 name, email, password, confirmPassword 관리
+- handleSignup 구현
+
+---
+
+### Frontend - Pages (페이지 컴포넌트)
+
+**데이터 fetching**과 **상태 관리**를 구현해야 합니다:
+
+#### 📄 `frontend/src/components/pages/ProductsClient.tsx`
+
+```typescript
+// TODO: useState 설정 (products, loading, error)
+// TODO: useEffect로 상품 데이터 로드
+// 힌트: productApi.getAll() 호출
+```
+
+**참고**: `frontend/src/store/cartStore.ts` (Zustand 예시)
+
+#### 📄 `frontend/src/components/pages/CartClient.tsx`
+
+- useCartStore 사용법
+- handleUpdateQuantity, handleRemoveItem 구현
+
+#### 📄 `frontend/src/components/pages/MyPageClient.tsx`
+
+- validateForm, handleUpdateProfile 구현
+
+---
+
+## 💡 학습 팁
+
+### 1️⃣ Backend 학습 순서
+
+1. **Services 먼저 읽기** → 기능 이해
+2. **Controllers 구현** → Services 호출
+3. **Routes 연결** → 컨트롤러 연결
+
+### 2️⃣ Frontend 학습 순서
+
+1. **api.ts 읽기** → API 이해
+2. **Forms 구현** → 사용자 입력 처리
+3. **Pages 구현** → 데이터 표시
+
+### 3️⃣ 막혔을 때
+
+1. 같은 폴더의 다른 파일 보기
+2. Services 폴더 참고
+3. Howtomake.md 확인
+4. 에러 메시지 검색
 
 ---
 
@@ -242,174 +370,6 @@ oz-shoppingmall/
 
 ---
 
-## ⚠️ 자주 발생하는 오류와 해결법
-
-### 1. Git 관련 오류
-
-#### `fatal: not a git repository`
-
-**원인**: 현재 폴더가 Git 저장소로 초기화되지 않았을 때 발생합니다.
-
-```bash
-# 해결: Git 초기화
-git init
-```
-
-#### `fatal: remote origin already exists`
-
-**원인**: 이미 origin이라는 이름의 원격 저장소가 등록되어 있을 때 발생합니다.
-
-```bash
-# 해결: 기존 remote 제거 후 다시 추가
-git remote remove origin
-git remote add origin [새로운_저장소_주소]
-```
-
-#### `error: failed to push some refs`
-
-**원인**: 원격 저장소에 로컬에 없는 커밋이 있어서 push가 거부될 때 발생합니다.
-
-```bash
-# 해결: 먼저 pull 받기
-git pull origin main --rebase
-git push origin main
-```
-
-#### `Updates were rejected because the tip of your current branch is behind`
-
-**원인**: 다른 곳에서 먼저 push를 해서 원격 저장소가 로컬보다 앞서 있을 때 발생합니다. (협업 시 자주 발생)
-
-```bash
-# 해결 1: rebase 사용 (추천 - 커밋 히스토리가 깔끔함)
-git pull origin main --rebase
-git push origin main
-
-# 해결 2: merge 사용 (병합 커밋 생성)
-git pull origin main
-git push origin main
-
-# 해결 3: 강제 push (⚠️ 위험! 원격의 변경사항이 사라집니다)
-# git push origin main --force  # 절대 사용하지 마세요!
-```
-
-#### `diverged` - 로컬과 원격이 서로 다른 커밋을 가지고 있음
-
-**원인**: 로컬과 원격 저장소의 커밋 이력이 갈라져서(diverged) 충돌이 발생했을 때 나타납니다.
-
-```bash
-# 현재 상태 확인
-git status
-
-# 해결: pull로 병합 후 push
-git pull origin main
-# 충돌이 있다면 해결 후:
-git add .
-git commit -m "Merge conflicts resolved"
-git push origin main
-```
-
-#### Permission denied (publickey)
-
-**원인**: SSH 키가 설정되지 않았거나 GitHub에 등록되지 않았을 때 발생합니다.
-
-```bash
-# 해결: SSH 키 설정 또는 HTTPS 사용
-git remote set-url origin https://github.com/username/repo.git
-```
-
-### 2. Backend 오류
-
-#### `Error: connect ECONNREFUSED`
-
-**원인**: MySQL 서버가 실행되지 않았거나 연결할 수 없을 때 발생합니다.
-
-```bash
-# macOS
-brew services list | grep mysql
-brew services start mysql
-
-# Windows
-# 서비스 관리자에서 MySQL 시작
-```
-
-#### `ER_ACCESS_DENIED_ERROR`
-
-**원인**: 데이터베이스 접속 정보(사용자명, 비밀번호)가 잘못되었을 때 발생합니다.
-
-- `.env` 파일의 데이터베이스 비밀번호를 확인하세요
-- MySQL 사용자 권한을 확인하세요
-
-#### `Cannot find module 'express'`
-
-**원인**: 필요한 npm 패키지가 설치되지 않았을 때 발생합니다.
-
-```bash
-# 해결: 의존성 재설치
-cd backend
-rm -rf node_modules package-lock.json
-npm install
-```
-
-### 3. Frontend 오류
-
-#### `CORS policy error`
-
-**원인**: 브라우저가 다른 도메인의 API 요청을 차단할 때 발생합니다. (보안 정책)
-
-- 백엔드가 실행 중인지 확인하세요 (`http://localhost:3001`)
-- 백엔드의 CORS 설정을 확인하세요
-
-#### `Module not found: Can't resolve`
-
-**원인**: import한 모듈을 찾을 수 없거나 npm 패키지가 설치되지 않았을 때 발생합니다.
-
-```bash
-# 해결: 의존성 재설치
-cd frontend
-rm -rf node_modules package-lock.json .next
-npm install
-```
-
-#### Port 3000 is already in use
-
-**원인**: 3000번 포트를 다른 프로그램이 사용 중일 때 발생합니다.
-
-```bash
-# 해결: 다른 프로세스 종료
-# macOS/Linux
-lsof -ti:3000 | xargs kill -9
-
-# Windows
-netstat -ano | findstr :3000
-taskkill /PID [PID번호] /F
-```
-
-### 4. 데이터베이스 오류
-
-#### `Unknown database 'shopping_mall'`
-
-**원인**: `shopping_mall` 데이터베이스가 MySQL에 생성되지 않았을 때 발생합니다.
-
-```bash
-# 해결: 데이터베이스 생성
-mysql -u root -p
-CREATE DATABASE shopping_mall;
-exit;
-```
-
-#### 테이블이 생성되지 않음
-
-**원인**: 데이터베이스는 있지만 테이블이 없을 때 발생합니다. 이 프로젝트는 자동으로 테이블을 생성합니다.
-
-```bash
-# 해결: 서버를 한 번 실행하면 자동으로 테이블 생성됨
-cd backend
-npm run dev
-# 로그에서 "Tables checked/created successfully" 확인
-```
-
----
-
 ## 📝 환경 변수 템플릿
 
 ### backend/.env
@@ -428,17 +388,6 @@ JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
 - ⚠️ `.env` 파일은 절대 Git에 올리지 마세요!
 - ⚠️ JWT_SECRET은 랜덤한 긴 문자열로 변경하세요
 - ⚠️ 실제 운영 환경에서는 더 강력한 보안 설정이 필요합니다
-
----
-
-## 🎯 기능 목록
-
-- ✅ 회원가입 / 로그인 (JWT 인증)
-- ✅ 상품 목록 조회 (페이지네이션)
-- ✅ 상품 상세 조회
-- ✅ 장바구니 추가/수정/삭제
-- ✅ 마이페이지 (프로필 조회/수정)
-- ✅ 반응형 디자인
 
 ---
 
