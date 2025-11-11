@@ -90,7 +90,7 @@ git branch -M main
 git push -u origin main
 ```
 
-### 브랜치 만들어서 작업하기
+### 브랜치 만들어서 작업하기(선택)
 
 ```bash
 # 새 브랜치 생성 및 이동
