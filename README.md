@@ -38,7 +38,7 @@
 
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
 ![bcrypt](https://img.shields.io/badge/bcrypt-3178C6?style=for-the-badge&logo=letsencrypt&logoColor=white)
 
@@ -150,13 +150,199 @@ cd ../frontend
 npm install
 ```
 
-### 3. 구현하기
+### 2-1. 프론트엔드 환경 변수 설정
+
+프론트엔드 폴더에도 `.env.local` 파일을 생성하세요:
+
+```bash
+cd frontend
+cp .env.example .env.local
+```
+
+**frontend/.env.local** 파일:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001/api
+NODE_ENV=development
+```
+
+💡 **Next.js 환경 변수 규칙**:
+
+- 브라우저에서 접근 가능한 변수는 `NEXT_PUBLIC_` 접두사 필수
+- `.env.local` 파일은 Git에 올라가지 않음 (`.gitignore`에 포함됨)
+- 배포 시에는 `NEXT_PUBLIC_API_URL`을 실제 서버 주소로 변경
+
+### 3. PostgreSQL 설치 및 데이터베이스 설정
+
+#### 3-1. PostgreSQL 설치하기
+
+**macOS (Homebrew 사용)**
+
+```bash
+# Homebrew로 PostgreSQL 설치
+brew install postgresql@14
+
+# PostgreSQL 서비스 시작
+brew services start postgresql@14
+
+# PostgreSQL 실행 확인
+psql --version
+```
+
+**Windows**
+
+1. [PostgreSQL 공식 사이트](https://www.postgresql.org/download/windows/)에서 Installer 다운로드
+2. 설치 프로그램 실행
+3. 포트 번호: 5432 (기본값)
+4. Superuser 비밀번호 설정 (postgres 사용자 - 꼭 기억하세요!)
+5. Stack Builder는 건너뛰기 가능
+
+**Ubuntu/Linux**
+
+```bash
+# PostgreSQL 설치
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+
+# PostgreSQL 시작
+sudo systemctl start postgresql
+
+# PostgreSQL 상태 확인
+sudo systemctl status postgresql
+```
+
+#### 3-2. PostgreSQL 접속 및 데이터베이스 생성
+
+**macOS/Linux**
+
+```bash
+# PostgreSQL 접속 (기본 사용자로)
+psql postgres
+
+# 또는 postgres 사용자로
+psql -U postgres
+```
+
+**Windows**
+
+- 시작 메뉴에서 "SQL Shell (psql)" 실행
+- 또는 명령 프롬프트에서: `psql -U postgres`
+
+PostgreSQL에 접속한 후, 다음 명령어로 데이터베이스를 생성합니다:
+
+```sql
+-- 데이터베이스 생성
+CREATE DATABASE shopping_mall;
+
+-- 데이터베이스 확인
+\l
+
+-- 생성한 DB로 연결
+\c shopping_mall
+
+-- PostgreSQL 종료
+\q
+```
+
+💡 **참고**: 테이블은 백엔드 서버가 자동으로 생성해줍니다!
+
+#### 3-3. 환경 변수 설정
+
+백엔드 폴더에 `.env` 파일을 생성하고 다음 내용을 입력하세요:
+
+```bash
+cd backend
+```
+
+💡 **템플릿 파일 제공**: `backend/.env.example` 파일을 복사해서 사용하세요!
+
+```bash
+# .env.example 파일을 .env로 복사
+cp .env.example .env
+```
+
+**backend/.env** 파일 생성:
+
+```env
+PORT=3001
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_postgres_password
+DB_NAME=shopping_mall
+JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
+NODE_ENV=development
+```
+
+⚠️ **중요**:
+
+- `DB_PASSWORD`를 본인의 PostgreSQL 비밀번호로 변경하세요
+- `DB_USER`는 기본적으로 `postgres`입니다
+- `JWT_SECRET`은 랜덤한 긴 문자열로 변경하세요
+  - 생성 방법: `openssl rand -base64 32`
+- `.env` 파일은 절대 Git에 올리지 마세요! (`.gitignore`에 이미 포함됨)
+
+#### 3-4. PostgreSQL 연결 테스트
+
+```bash
+# 백엔드 서버 실행
+cd backend
+npm run dev
+```
+
+콘솔에서 다음 메시지를 확인하세요:
+
+- ✅ "Database 'shopping_mall' exists"
+- ✅ "Tables checked/created successfully"
+
+#### 3-5. PostgreSQL 명령어 모음 (참고용)
+
+```bash
+# PostgreSQL 서비스 상태 확인 (macOS)
+brew services list | grep postgresql
+
+# PostgreSQL 서비스 중지
+brew services stop postgresql@14
+
+# PostgreSQL 서비스 재시작
+brew services restart postgresql@14
+
+# PostgreSQL 접속 (특정 DB로)
+psql -U postgres -d shopping_mall
+```
+
+**PostgreSQL 내부 명령어 (psql에서 사용)**
+
+```sql
+-- 모든 테이블 확인
+\dt
+
+-- 특정 테이블 구조 확인
+\d users
+\d products
+\d cart
+
+-- 데이터 확인
+SELECT * FROM users;
+SELECT * FROM products;
+
+-- 데이터베이스 목록
+\l
+
+-- 다른 DB로 연결
+\c database_name
+
+-- 종료
+\q
+```
+
+### 4. 구현하기
 
 TODO 주석이 있는 파일들을 열어서 코드를 작성하세요!
 
 자세한 구현 가이드는 아래 **"학습 가이드"** 섹션과 **[Howtomake.md](./Howtomake.md)** 파일을 참고하세요.
 
-### 4. 완성 후 테스트하기
+### 5. 완성 후 테스트하기
 
 코드를 다 구현한 후, 정상 작동하는지 테스트해보세요:
 
@@ -390,33 +576,12 @@ oz-shoppingmall/
 
 ---
 
-## 📝 환경 변수 템플릿
-
-### backend/.env
-
-```env
-PORT=3001
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_mysql_password
-DB_NAME=shopping_mall
-JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
-```
-
-### 주의사항
-
-- ⚠️ `.env` 파일은 절대 Git에 올리지 마세요!
-- ⚠️ JWT_SECRET은 랜덤한 긴 문자열로 변경하세요
-- ⚠️ 실제 운영 환경에서는 더 강력한 보안 설정이 필요합니다
-
----
-
 ## 💡 학습 목표
 
 이 프로젝트를 통해 다음을 학습할 수 있습니다:
 
 1. **Backend**: Express.js로 RESTful API 만들기
-2. **Database**: MySQL 데이터베이스 설계 및 쿼리
+2. **Database**: PostgreSQL 데이터베이스 설계 및 쿼리
 3. **Authentication**: JWT 기반 인증 시스템
 4. **Frontend**: Next.js와 TypeScript로 모던 웹 개발
 5. **State Management**: Zustand로 상태 관리
@@ -430,7 +595,7 @@ JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
 - [Howtomake.md](./Howtomake.md) - 상세한 단계별 구현 가이드
 - [Express.js 공식 문서](https://expressjs.com/)
 - [Next.js 공식 문서](https://nextjs.org/docs)
-- [MySQL 공식 문서](https://dev.mysql.com/doc/)
+- [PostgreSQL 공식 문서](https://www.postgresql.org/docs/)
 - [Tailwind CSS 공식 문서](https://tailwindcss.com/docs)
 
 ---

@@ -13,6 +13,8 @@ const cartRoutes = require('./routes/cartRoutes');       // 장바구니 관련 
 
 // 데이터베이스 초기 설정 함수 - 테이블 생성 및 샘플 데이터 삽입
 const setupDatabase = require('./config/dbSetup');
+// 에러 핸들링 미들웨어
+const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 
 // 환경변수 파일(.env) 로드 - DB 접속 정보, JWT 시크릿 등을 설정
 dotenv.config();
@@ -38,6 +40,10 @@ const port = process.env.PORT || 3001;
 app.get('/', (req, res) => {
   res.send('Hello from the backend!');
 });
+
+// 에러 핸들링 미들웨어 (반드시 모든 라우트 뒤에 위치해야 함)
+app.use(notFound);       // 404 에러 처리
+app.use(errorHandler);   // 전역 에러 처리
 
 // 서버 시작 함수 - 비동기로 데이터베이스 설정 후 서버 구동
 const startServer = async () => {

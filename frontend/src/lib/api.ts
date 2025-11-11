@@ -51,7 +51,8 @@ export interface ApiResponse<T = unknown> {
   message?: string;
 }
 
-const API_BASE_URL = 'http://localhost:3001/api';
+// 환경 변수에서 API URL 가져오기 (없으면 개발 환경 기본값 사용)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 // API 요청을 위한 기본 설정
 export const apiConfig = {

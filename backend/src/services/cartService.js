@@ -12,43 +12,43 @@ exports.addToCart = async (userId, productId, quantity = 1) => {
   let connection;
   try {
     // 데이터베이스 연결 풀에서 연결 가져오기
-    connection = await pool.getConnection();
+    connection = await pool.connect();
     
     // 1단계: 상품 존재 여부 및 재고 확인
-    const [products] = await connection.query('SELECT stock FROM products WHERE id = ?', [productId]);
-    if (products.length === 0) {
+    const productResult = await connection.query('SELECT stock FROM products WHERE id = $1', [productId]);
+    if (productResult.rows.length === 0) {
       throw new Error('상품을 찾을 수 없습니다.');
     }
     
     // 요청한 수량이 재고보다 많은지 확인
-    if (products[0].stock < quantity) {
+    if (productResult.rows[0].stock < quantity) {
       throw new Error('재고가 부족합니다.');
     }
 
     // 2단계: 장바구니에 이미 같은 상품이 있는지 확인
-    const [existingItems] = await connection.query(
-      'SELECT * FROM cart WHERE user_id = ? AND product_id = ?',
+    const existingResult = await connection.query(
+      'SELECT * FROM cart WHERE user_id = $1 AND product_id = $2',
       [userId, productId]
     );
 
-    if (existingItems.length > 0) {
+    if (existingResult.rows.length > 0) {
       // 이미 장바구니에 있는 경우: 기존 수량에 추가
-      const newQuantity = existingItems[0].quantity + quantity;
+      const newQuantity = existingResult.rows[0].quantity + quantity;
       
       // 새로운 총 수량이 재고를 초과하는지 확인
-      if (products[0].stock < newQuantity) {
+      if (productResult.rows[0].stock < newQuantity) {
         throw new Error('재고가 부족합니다.');
       }
       
       // 수량 업데이트
       await connection.query(
-        'UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?',
+        'UPDATE cart SET quantity = $1 WHERE user_id = $2 AND product_id = $3',
         [newQuantity, userId, productId]
       );
     } else {
       // 새로운 상품인 경우: 장바구니에 새 항목 추가
       await connection.query(
-        'INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)',
+        'INSERT INTO cart (user_id, product_id, quantity) VALUES ($1, $2, $3)',
         [userId, productId, quantity]
       );
     }
@@ -70,11 +70,11 @@ exports.addToCart = async (userId, productId, quantity = 1) => {
 exports.getCartItems = async (userId) => {
   let connection;
   try {
-    connection = await pool.getConnection();
+    connection = await pool.connect();
     
     // 장바구니와 상품 테이블을 조인하여 상세 정보 조회
     // - 장바구니 ID, 수량, 상품 정보, 총 가격 계산
-    const [items] = await connection.query(`
+    const result = await connection.query(`
       SELECT 
         c.id as cart_id,                    -- 장바구니 항목 ID
         c.quantity,                         -- 수량
@@ -86,11 +86,11 @@ exports.getCartItems = async (userId) => {
         (p.price * c.quantity) as total_price -- 해당 항목의 총 가격 (단가 × 수량)
       FROM cart c
       JOIN products p ON c.product_id = p.id  -- 상품 정보와 조인
-      WHERE c.user_id = ?                     -- 특정 사용자의 장바구니만 조회
+      WHERE c.user_id = $1                    -- 특정 사용자의 장바구니만 조회
       ORDER BY c.created_at DESC              -- 최근 추가한 순서대로 정렬
     `, [userId]);
     
-    return items;
+    return result.rows;
   } finally {
     if (connection) {
       connection.release();
@@ -108,27 +108,27 @@ exports.getCartItems = async (userId) => {
 exports.updateCartItem = async (userId, productId, quantity) => {
   let connection;
   try {
-    connection = await pool.getConnection();
+    connection = await pool.connect();
     
     // 1단계: 상품의 재고 확인
-    const [products] = await connection.query('SELECT stock FROM products WHERE id = ?', [productId]);
-    if (products.length === 0) {
+    const productResult = await connection.query('SELECT stock FROM products WHERE id = $1', [productId]);
+    if (productResult.rows.length === 0) {
       throw new Error('상품을 찾을 수 없습니다.');
     }
     
     // 요청한 수량이 재고를 초과하는지 확인
-    if (products[0].stock < quantity) {
+    if (productResult.rows[0].stock < quantity) {
       throw new Error('재고가 부족합니다.');
     }
 
     // 2단계: 장바구니 항목의 수량 업데이트
-    const [result] = await connection.query(
-      'UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?',
+    const result = await connection.query(
+      'UPDATE cart SET quantity = $1 WHERE user_id = $2 AND product_id = $3',
       [quantity, userId, productId]
     );
 
     // 업데이트된 행이 없으면 해당 장바구니 항목이 존재하지 않음
-    if (result.affectedRows === 0) {
+    if (result.rowCount === 0) {
       throw new Error('장바구니 항목을 찾을 수 없습니다.');
     }
 
@@ -149,16 +149,16 @@ exports.updateCartItem = async (userId, productId, quantity) => {
 exports.removeFromCart = async (userId, productId) => {
   let connection;
   try {
-    connection = await pool.getConnection();
+    connection = await pool.connect();
     
     // 특정 사용자의 특정 상품을 장바구니에서 삭제
-    const [result] = await connection.query(
-      'DELETE FROM cart WHERE user_id = ? AND product_id = ?',
+    const result = await connection.query(
+      'DELETE FROM cart WHERE user_id = $1 AND product_id = $2',
       [userId, productId]
     );
 
     // 삭제된 행이 없으면 해당 장바구니 항목이 존재하지 않음
-    if (result.affectedRows === 0) {
+    if (result.rowCount === 0) {
       throw new Error('장바구니 항목을 찾을 수 없습니다.');
     }
 
@@ -178,14 +178,14 @@ exports.removeFromCart = async (userId, productId) => {
 exports.clearCart = async (userId) => {
   let connection;
   try {
-    connection = await pool.getConnection();
+    connection = await pool.connect();
     
     // 특정 사용자의 모든 장바구니 항목 삭제
-    await connection.query('DELETE FROM cart WHERE user_id = ?', [userId]);
+    await connection.query('DELETE FROM cart WHERE user_id = $1', [userId]);
     return true;
   } finally {
     if (connection) {
       connection.release();
     }
   }
-}; 
+};

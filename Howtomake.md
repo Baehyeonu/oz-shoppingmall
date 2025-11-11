@@ -4,6 +4,7 @@
 > 막힐 때마다 참고하되, 직접 코드를 작성해보는 것이 중요합니다.
 
 ## 📋 목차
+
 1. [실습 개요](#실습-개요)
 2. [개발 환경 준비](#개발-환경-준비)
 3. [프로젝트 구조 만들기](#프로젝트-구조-만들기)
@@ -23,26 +24,32 @@
 ## 🎯 실습 개요
 
 ### 무엇을 만들까요?
+
 완전한 쇼핑몰 웹사이트를 처음부터 끝까지 직접 구현합니다.
 
 ### 최종 결과물
-- 회원가입/로그인 시스템
-- 상품 목록 조회
-- 장바구니 기능
-- 사용자 프로필 관리
-- 반응형 웹 디자인
+
+- ✅ 회원가입 / 로그인 (JWT 인증)
+- ✅ 상품 목록 조회 (페이지네이션)
+- ✅ 상품 상세 조회
+- ✅ 장바구니 추가/수정/삭제
+- ✅ 마이페이지 (프로필 조회/수정)
+- ✅ 반응형 디자인
 
 ### 기술 스택
-**백엔드**: Node.js + Express.js + MySQL + JWT  
+
+**백엔드**: Node.js + Express.js + PostgreSQL + JWT  
 **프론트엔드**: Next.js + TypeScript + Tailwind CSS + Zustand
 
 ### 실습 방법
+
 1. **각 단계별로 직접 코드 작성**
 2. **막히면 정답지 폴더의 해당 파일 참고**
 3. **복사 붙여넣기 금지! 직접 타이핑하며 이해**
 4. **에러가 나도 당황하지 말고 차근차근 해결**
 
 ### 초보자를 위한 팁
+
 - **터미널 2개 사용**: 하나는 백엔드(3001포트), 하나는 프론트엔드(3000포트)
 - **브라우저 개발자 도구 활용**: F12 → Network 탭에서 API 호출 확인
 - **Postman 설치**: API 테스트용 (https://www.postman.com/)
@@ -59,9 +66,9 @@
 node --version
 npm --version
 
-# MySQL 설치 및 실행
-# macOS: brew install mysql && brew services start mysql
-# Windows: https://dev.mysql.com/downloads/installer/
+# PostgreSQL 설치 및 실행
+# macOS: brew install postgresql@14 && brew services start postgresql@14
+# Windows: https://www.postgresql.org/download/windows/
 ```
 
 ### 2. 새 프로젝트 디렉토리 생성
@@ -76,6 +83,7 @@ mkdir backend frontend
 ```
 
 ### 3. VS Code 확장 프로그램 설치
+
 - ES7+ React/Redux/React-Native snippets
 - Prettier - Code formatter
 - ESLint
@@ -86,6 +94,7 @@ mkdir backend frontend
 ## 📁 프로젝트 구조 만들기
 
 ### 목표 구조
+
 ```
 my-shopping-mall/
 ├── backend/
@@ -107,6 +116,7 @@ my-shopping-mall/
 ```
 
 ### 실습: 폴더 구조 생성
+
 ```bash
 # 백엔드 폴더 구조
 cd backend
@@ -115,7 +125,7 @@ cd src
 mkdir config controllers middlewares routes services
 touch index.js
 
-# 프론트엔드 폴더 구조  
+# 프론트엔드 폴더 구조
 cd ../../frontend
 mkdir src
 cd src
@@ -127,6 +137,7 @@ mkdir app components lib store
 ## 🔙 1단계: 백엔드 기본 설정
 
 ### 목표
+
 Express.js 서버를 만들고 기본 API 응답을 확인합니다.
 
 ### 실습 1-1: package.json 생성
@@ -139,15 +150,16 @@ npm init -y
 ### 실습 1-2: 필요한 패키지 설치
 
 ```bash
-npm install express cors dotenv mysql2 jsonwebtoken bcrypt bcryptjs
+npm install express cors dotenv pg jsonwebtoken bcrypt bcryptjs
 npm install -D nodemon
 ```
 
-> **📌 주의**: bcrypt와 bcryptjs 둘 다 설치합니다 (정답지에서 bcrypt 사용)
+> **📌 주의**: pg는 PostgreSQL용 Node.js 드라이버입니다. bcrypt와 bcryptjs 둘 다 설치합니다 (정답지에서 bcrypt 사용)
 
 ### 실습 1-3: package.json scripts 수정
 
 **직접 작성해보세요!**
+
 ```json
 {
   "scripts": {
@@ -162,11 +174,12 @@ npm install -D nodemon
 **스스로 작성해보세요!** 막히면 정답지의 `backend/src/index.js` 참고
 
 **힌트:**
+
 ```javascript
 // 필요한 모듈들 import
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
+const express = require("express");
+const cors = require("cors");
+const dotenv = require("dotenv");
 
 // 환경변수 로드
 dotenv.config();
@@ -179,8 +192,8 @@ app.use(cors());
 app.use(express.json());
 
 // 테스트 라우트
-app.get('/', (req, res) => {
-  res.json({ message: 'Hello Shopping Mall!' });
+app.get("/", (req, res) => {
+  res.json({ message: "Hello Shopping Mall!" });
 });
 
 // 서버 시작
@@ -192,14 +205,27 @@ app.listen(port, () => {
 
 ### 실습 1-5: 환경변수 설정 (.env)
 
+💡 **팁**: `backend` 폴더에 `.env.example` 파일이 제공됩니다. 이 파일을 복사해서 사용하세요!
+
+```bash
+# backend 폴더에서
+cp .env.example .env
+```
+
+그 다음 `.env` 파일을 열어서 본인의 PostgreSQL 비밀번호로 수정하세요:
+
 ```env
 DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_mysql_password
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_postgres_password
 DB_NAME=shopping_mall
 JWT_SECRET=your_super_secret_key_here
 PORT=3001
+NODE_ENV=development
 ```
+
+⚠️ **중요**: `DB_PASSWORD`와 `JWT_SECRET`을 반드시 변경하세요!
 
 ### 실습 1-6: 서버 실행 테스트
 
@@ -216,24 +242,27 @@ npm run dev
 ## 🗄️ 2단계: 데이터베이스 연동
 
 ### 목표
-MySQL 데이터베이스에 연결하고 테이블을 생성합니다.
+
+PostgreSQL 데이터베이스에 연결하고 테이블을 생성합니다.
 
 ### 실습 2-1: 데이터베이스 연결 설정 (src/config/db.js)
 
 **직접 작성해보세요!**
 
 **힌트:**
-```javascript
-const mysql = require('mysql2/promise');
 
-const pool = mysql.createPool({
+```javascript
+const { Pool } = require("pg");
+
+const pool = new Pool({
   host: process.env.DB_HOST,
+  port: process.env.DB_PORT || 5432,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+  max: 10, // 최대 연결 수
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
 });
 
 module.exports = pool;
@@ -244,6 +273,7 @@ module.exports = pool;
 **이 파일은 복잡하니 정답지를 참고하면서 단계별로 작성하세요!**
 
 **작성할 내용:**
+
 1. 데이터베이스 생성
 2. users 테이블 생성 (이메일, 비밀번호, 이름, 전화번호, 주소 등)
 3. products 테이블 생성 (상품명, 설명, 가격, 이미지URL, 재고, 카테고리 등)
@@ -252,21 +282,23 @@ module.exports = pool;
 
 **정답지 위치**: `backend/src/config/dbSetup.js`
 
-> **💡 초보자 팁**: 
+> **💡 초보자 팁 (PostgreSQL)**:
+>
 > - 테이블 생성 쿼리는 매우 중요합니다
-> - AUTO_INCREMENT, PRIMARY KEY, FOREIGN KEY 개념을 이해하세요
+> - `SERIAL` (PostgreSQL의 AUTO_INCREMENT), PRIMARY KEY, FOREIGN KEY 개념을 이해하세요
 > - UNIQUE 제약조건으로 중복 방지
+> - MySQL과 달리 placeholder로 `$1, $2, $3`을 사용합니다
 
 ### 실습 2-3: index.js에 DB 설정 추가
 
 ```javascript
 // index.js 상단에 추가
-const setupDatabase = require('./config/dbSetup');
+const setupDatabase = require("./config/dbSetup");
 
 // 서버 시작 함수 수정
 const startServer = async () => {
   await setupDatabase();
-  
+
   app.listen(port, () => {
     console.log(`Server running on port ${port}`);
   });
@@ -288,6 +320,7 @@ npm run dev
 ## 🔐 3단계: 사용자 인증 시스템
 
 ### 목표
+
 회원가입과 로그인 API를 구현합니다.
 
 ### 실습 3-1: 인증 서비스 만들기 (src/services/authService.js)
@@ -295,32 +328,36 @@ npm run dev
 **직접 작성해보세요!**
 
 **구현할 함수들:**
+
 ```javascript
-const pool = require('../config/db');
-const bcrypt = require('bcrypt');  // 정답지에서는 bcrypt 사용
-const jwt = require('jsonwebtoken');
+const pool = require("../config/db");
+const bcrypt = require("bcrypt"); // 정답지에서는 bcrypt 사용
+const jwt = require("jsonwebtoken");
 
 // 회원가입
 exports.signup = async (email, password, name) => {
-  const connection = await pool.getConnection();
+  const connection = await pool.connect(); // PostgreSQL은 connect() 사용
   try {
     // 1. 이메일 중복 확인
-    const [rows] = await connection.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (rows.length > 0) {
-      throw new Error('User with this email already exists');
+    const result = await connection.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
+    if (result.rows.length > 0) {
+      throw new Error("User with this email already exists");
     }
 
     // 2. 비밀번호 해시화 (saltRounds: 10)
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 3. 사용자 데이터베이스에 저장
-    const [result] = await connection.query(
-      'INSERT INTO users (email, password, name) VALUES (?, ?, ?)',
+    // 3. 사용자 데이터베이스에 저장 (RETURNING으로 ID 받기)
+    const insertResult = await connection.query(
+      "INSERT INTO users (email, password, name) VALUES ($1, $2, $3) RETURNING id",
       [email, hashedPassword, name]
     );
 
     // 4. 사용자 ID 반환
-    return result.insertId;
+    return insertResult.rows[0].id;
   } finally {
     connection.release(); // 연결 해제 필수!
   }
@@ -328,31 +365,34 @@ exports.signup = async (email, password, name) => {
 
 // 로그인
 exports.login = async (email, password) => {
-  const connection = await pool.getConnection();
+  const connection = await pool.connect(); // PostgreSQL은 connect() 사용
   try {
-    // 1. 이메일로 사용자 조회
-    const [rows] = await connection.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (rows.length === 0) {
-      throw new Error('Invalid email or password');
+    // 1. 이메일로 사용자 조회 ($1 placeholder 사용)
+    const result = await connection.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
+    if (result.rows.length === 0) {
+      throw new Error("Invalid email or password");
     }
 
-    const user = rows[0];
+    const user = result.rows[0];
 
     // 2. 비밀번호 검증
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      throw new Error('Invalid email or password');
+      throw new Error("Invalid email or password");
     }
 
     // 3. JWT 토큰 생성 및 반환
     const payload = {
       userId: user.id,
       email: user.email,
-      name: user.name
+      name: user.name,
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: '1h'
+      expiresIn: "1h",
     });
 
     return token;
@@ -362,7 +402,12 @@ exports.login = async (email, password) => {
 };
 ```
 
-> **💡 초보자 팁**:
+> **💡 초보자 팁 (PostgreSQL)**:
+>
+> - PostgreSQL은 `pool.connect()`를 사용합니다 (MySQL의 getConnection과 다름)
+> - 쿼리 결과는 `result.rows` 배열로 접근합니다
+> - Placeholder는 `$1, $2, $3` 형식입니다 (MySQL의 ? 대신)
+> - INSERT 후 ID를 받으려면 `RETURNING id`를 사용합니다
 > - `connection.release()`는 반드시 finally 블록에서 호출
 > - bcrypt.hash()의 두 번째 매개변수는 salt rounds (10이 적당)
 > - JWT payload에는 민감하지 않은 정보만 포함
@@ -374,6 +419,7 @@ exports.login = async (email, password) => {
 **직접 작성해보세요!**
 
 **구현할 함수들:**
+
 ```javascript
 // 회원가입 처리
 exports.signup = async (req, res) => {
@@ -382,7 +428,7 @@ exports.signup = async (req, res) => {
   // 3. 응답 반환
 };
 
-// 로그인 처리  
+// 로그인 처리
 exports.login = async (req, res) => {
   // 1. 요청 데이터 검증
   // 2. authService.login 호출
@@ -395,15 +441,15 @@ exports.login = async (req, res) => {
 **직접 작성해보세요!**
 
 ```javascript
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const authController = require('../controllers/authController');
+const authController = require("../controllers/authController");
 
 // POST /api/auth/signup
-router.post('/signup', authController.signup);
+router.post("/signup", authController.signup);
 
 // POST /api/auth/login
-router.post('/login', authController.login);
+router.post("/login", authController.login);
 
 module.exports = router;
 ```
@@ -412,10 +458,10 @@ module.exports = router;
 
 ```javascript
 // 라우트 import
-const authRoutes = require('./routes/authRoutes');
+const authRoutes = require("./routes/authRoutes");
 
 // 라우트 연결
-app.use('/api/auth', authRoutes);
+app.use("/api/auth", authRoutes);
 ```
 
 ### 실습 3-5: JWT 미들웨어 만들기 (src/middlewares/authMiddleware.js)
@@ -423,8 +469,9 @@ app.use('/api/auth', authRoutes);
 **직접 작성해보세요!**
 
 **힌트:**
+
 ```javascript
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 const authenticateToken = (req, res, next) => {
   // 1. Authorization 헤더에서 토큰 추출
@@ -439,18 +486,20 @@ module.exports = { authenticateToken };
 ### 실습 3-6: Postman으로 API 테스트
 
 **회원가입 테스트:**
+
 ```
 POST http://localhost:3001/api/auth/signup
 Content-Type: application/json
 
 {
   "name": "테스트 사용자",
-  "email": "test@test.com", 
+  "email": "test@test.com",
   "password": "123456"
 }
 ```
 
 **로그인 테스트:**
+
 ```
 POST http://localhost:3001/api/auth/login
 Content-Type: application/json
@@ -468,6 +517,7 @@ Content-Type: application/json
 ## 📦 4단계: 상품 관리 시스템
 
 ### 목표
+
 상품 목록 조회 API를 구현합니다.
 
 ### 실습 4-1: 상품 서비스 만들기 (src/services/productService.js)
@@ -495,8 +545,9 @@ exports.getProductById = async (id) => {
 ### 실습 4-4: 장바구니 시스템 구현
 
 **다음 파일들을 차례로 구현하세요:**
+
 - `src/services/cartService.js`
-- `src/controllers/cartController.js` 
+- `src/controllers/cartController.js`
 - `src/routes/cartRoutes.js`
 
 **정답지 참고**: `backend/src/services/cartService.js` 등
@@ -504,6 +555,7 @@ exports.getProductById = async (id) => {
 ### 실습 4-5: 사용자 관리 시스템 구현
 
 **다음 파일들을 구현하세요:**
+
 - `src/services/userService.js`
 - `src/controllers/userController.js`
 - `src/routes/userRoutes.js`
@@ -515,6 +567,7 @@ exports.getProductById = async (id) => {
 ## 🎨 5단계: 프론트엔드 기본 구조
 
 ### 목표
+
 Next.js 프로젝트를 생성하고 기본 구조를 만듭니다.
 
 ### 실습 5-1: Next.js 프로젝트 생성
@@ -532,7 +585,29 @@ npx create-next-app@latest . --typescript --tailwind --app --src-dir --import-al
 npm install zustand
 ```
 
-### 실습 5-3: 폴더 구조 정리
+### 실습 5-3: 환경 변수 설정
+
+프론트엔드에서도 API URL을 환경 변수로 관리합니다:
+
+```bash
+# frontend 폴더에서
+cp .env.example .env.local
+```
+
+**frontend/.env.local** 파일:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001/api
+NODE_ENV=development
+```
+
+> **📌 Next.js 환경 변수 규칙**:
+>
+> - 브라우저에서 사용할 변수는 `NEXT_PUBLIC_` 접두사 필수
+> - `.env.local` 파일 사용 (개발 환경용)
+> - 배포 시에는 Vercel이나 호스팅 서비스에서 환경 변수 설정
+
+### 실습 5-4: 폴더 구조 정리
 
 ```bash
 # Next.js는 이미 src 폴더를 생성했습니다
@@ -542,13 +617,14 @@ mkdir src/lib src/store
 
 > **📌 주의**: Next.js 15에서는 이미 src 폴더와 app 폴더가 생성됩니다!
 
-### 실습 5-4: 기본 레이아웃 만들기 (src/app/layout.tsx)
+### 실습 5-5: 기본 레이아웃 만들기 (src/app/layout.tsx)
 
 **직접 작성해보세요!**
 
 > **📌 중요**: layout.tsx를 수정한 후에는 Navbar와 Footer 컴포넌트를 만들어야 합니다!
 
 **힌트:**
+
 ```typescript
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -562,7 +638,7 @@ const geistSans = Geist({
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono", 
+  variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
@@ -578,12 +654,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         <div className="min-h-screen flex flex-col">
           {/* <Navbar /> 나중에 추가 */}
-          <main className="flex-1">
-            {children}
-          </main>
+          <main className="flex-1">{children}</main>
           {/* <Footer /> 나중에 추가 */}
         </div>
       </body>
@@ -592,16 +668,18 @@ export default function RootLayout({
 }
 ```
 
-> **📌 주의**: 
+> **📌 주의**:
+>
 > - CSS 파일 경로는 `../styles/globals.css`입니다
 > - Navbar와 Footer는 나중에 만들 예정이므로 주석 처리
 > - Next.js에서 제공하는 폰트와 메타데이터 설정 포함
 
-### 실습 5-5: 홈페이지 만들기 (src/app/page.tsx)
+### 실습 5-6: 홈페이지 만들기 (src/app/page.tsx)
 
 **직접 작성해보세요!**
 
 **구현할 내용:**
+
 - Hero 섹션
 - 기능 소개 섹션
 - "지금 쇼핑하기" 버튼
@@ -615,6 +693,7 @@ export default function RootLayout({
 ## 🔑 6단계: 로그인/회원가입 페이지
 
 ### 목표
+
 사용자가 회원가입하고 로그인할 수 있는 페이지를 만듭니다.
 
 ### 실습 6-1: API 유틸리티 만들기 (src/lib/api.ts)
@@ -622,9 +701,10 @@ export default function RootLayout({
 **직접 작성해보세요!**
 
 **구현할 내용:**
+
 ```typescript
 // API 기본 설정
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = "http://localhost:3001/api";
 
 // 인증 헤더 생성 함수
 export const getAuthHeaders = () => {
@@ -632,14 +712,21 @@ export const getAuthHeaders = () => {
 };
 
 // 공통 API 요청 함수
-export const apiRequest = async <T>(endpoint: string, options?: RequestInit): Promise<T> => {
+export const apiRequest = async <T>(
+  endpoint: string,
+  options?: RequestInit
+): Promise<T> => {
   // fetch 요청 구현
 };
 
 // 인증 API
 export const authApi = {
-  login: (credentials) => { /* 구현 */ },
-  signup: (userData) => { /* 구현 */ }
+  login: (credentials) => {
+    /* 구현 */
+  },
+  signup: (userData) => {
+    /* 구현 */
+  },
 };
 ```
 
@@ -650,6 +737,7 @@ export const authApi = {
 **직접 작성해보세요!**
 
 **구현할 내용:**
+
 - 토큰 관리 함수들
 - 유효성 검사 함수들
 - 에러 메시지 처리 함수
@@ -657,6 +745,7 @@ export const authApi = {
 ### 실습 6-3: 재사용 가능한 UI 컴포넌트 만들기
 
 **Button 컴포넌트** (src/components/ui/Button.tsx)
+
 ```typescript
 interface ButtonProps {
   children: React.ReactNode;
@@ -678,6 +767,7 @@ const Button: React.FC<ButtonProps> = ({ ... }) => {
 **직접 작성해보세요!**
 
 **구현할 기능:**
+
 - 이메일/비밀번호 입력
 - 폼 검증
 - API 호출
@@ -694,7 +784,7 @@ const Button: React.FC<ButtonProps> = ({ ... }) => {
 **직접 작성해보세요!**
 
 ```typescript
-import LoginForm from '@/components/forms/LoginForm';
+import LoginForm from "@/components/forms/LoginForm";
 
 export default function LoginPage() {
   return (
@@ -719,11 +809,13 @@ export default function LoginPage() {
 ## 🛍️ 7단계: 상품 목록 페이지
 
 ### 목표
+
 상품들을 카드 형태로 보여주는 페이지를 만듭니다.
 
 ### 실습 7-1: 상품 API 함수 추가 (src/lib/api.ts)
 
 **api.ts에 추가할 내용:**
+
 ```typescript
 // 상품 타입 정의
 export interface Product {
@@ -738,7 +830,7 @@ export interface Product {
 
 // 상품 API
 export const productApi = {
-  getAll: () => apiRequest<{ products: Product[] }>('/products')
+  getAll: () => apiRequest<{ products: Product[] }>("/products"),
 };
 ```
 
@@ -747,6 +839,7 @@ export const productApi = {
 **직접 작성해보세요!**
 
 **구현할 내용:**
+
 - 상품 이미지
 - 상품명, 설명
 - 가격 표시
@@ -760,6 +853,7 @@ export const productApi = {
 **직접 작성해보세요!**
 
 **구현할 기능:**
+
 - useEffect로 상품 데이터 로드
 - 로딩 상태 관리
 - 에러 처리
@@ -770,7 +864,7 @@ export const productApi = {
 **직접 작성해보세요!**
 
 ```typescript
-import ProductsClient from '@/components/pages/ProductsClient';
+import ProductsClient from "@/components/pages/ProductsClient";
 
 export default function ProductsPage() {
   return <ProductsClient />;
@@ -782,8 +876,9 @@ export default function ProductsPage() {
 **직접 작성해보세요!**
 
 **구현할 내용:**
+
 - 로고/홈 링크
-- 상품 목록 링크  
+- 상품 목록 링크
 - 로그인/로그아웃 버튼
 - 장바구니 링크
 - 반응형 메뉴 (모바일 햄버거 메뉴)
@@ -791,6 +886,7 @@ export default function ProductsPage() {
 **정답지 참고**: `frontend/src/components/layout/Navbar.tsx`
 
 > **💡 초보자 팁**:
+>
 > - `'use client'` 지시어 필요 (상태 관리 때문)
 > - useState로 모바일 메뉴 열림/닫힘 상태 관리
 > - localStorage에서 토큰 확인하여 로그인 상태 판단
@@ -802,6 +898,7 @@ export default function ProductsPage() {
 ## 🛒 8단계: 장바구니 기능
 
 ### 목표
+
 상품을 장바구니에 담고 관리할 수 있는 기능을 구현합니다.
 
 ### 실습 8-1: 장바구니 상태 관리 만들기 (src/store/cartStore.ts)
@@ -809,12 +906,13 @@ export default function ProductsPage() {
 **직접 작성해보세요!**
 
 **구현할 기능:**
+
 ```typescript
 interface CartState {
   items: CartItem[];
   total: number;
   loading: boolean;
-  
+
   addItem: (productId: number, quantity: number) => Promise<void>;
   removeItem: (productId: number) => Promise<void>;
   updateQuantity: (productId: number, quantity: number) => Promise<void>;
@@ -827,12 +925,21 @@ interface CartState {
 ### 실습 8-2: 장바구니 API 함수 추가 (src/lib/api.ts)
 
 **api.ts에 추가할 내용:**
+
 ```typescript
 export const cartApi = {
-  getCart: () => { /* 구현 */ },
-  addItem: (productId: number, quantity: number) => { /* 구현 */ },
-  updateItem: (productId: number, quantity: number) => { /* 구현 */ },
-  removeItem: (productId: number) => { /* 구현 */ }
+  getCart: () => {
+    /* 구현 */
+  },
+  addItem: (productId: number, quantity: number) => {
+    /* 구현 */
+  },
+  updateItem: (productId: number, quantity: number) => {
+    /* 구현 */
+  },
+  removeItem: (productId: number) => {
+    /* 구현 */
+  },
 };
 ```
 
@@ -841,6 +948,7 @@ export const cartApi = {
 **직접 작성해보세요!**
 
 **구현할 내용:**
+
 - 장바구니 아이템 목록
 - 수량 변경 버튼
 - 아이템 삭제 버튼
@@ -862,17 +970,22 @@ export const cartApi = {
 ## 👤 9단계: 마이페이지
 
 ### 목표
+
 사용자 정보를 보고 수정할 수 있는 페이지를 만듭니다.
 
 ### 실습 9-1: 사용자 API 함수 추가 (src/lib/api.ts)
 
 **api.ts에 추가할 내용:**
+
 ```typescript
 export const authApi = {
   // 기존 함수들...
-  getProfile: () => apiRequest<User>('/users/me'),
-  updateProfile: (userData: UpdateUserRequest) => 
-    apiRequest<User>('/users/me', { method: 'PUT', body: JSON.stringify(userData) })
+  getProfile: () => apiRequest<User>("/users/me"),
+  updateProfile: (userData: UpdateUserRequest) =>
+    apiRequest<User>("/users/me", {
+      method: "PUT",
+      body: JSON.stringify(userData),
+    }),
 };
 ```
 
@@ -881,6 +994,7 @@ export const authApi = {
 **직접 작성해보세요!**
 
 **구현할 기능:**
+
 - 사용자 정보 표시
 - 정보 수정 모드
 - 폼 검증
@@ -897,6 +1011,7 @@ export const authApi = {
 **직접 작성해보세요!**
 
 **구현할 기능:**
+
 - 로그인 상태 관리
 - 사용자 정보 저장
 - 자동 로그인 체크
@@ -909,6 +1024,7 @@ export const authApi = {
 ## 🎨 10단계: 스타일링 완성
 
 ### 목표
+
 Tailwind CSS로 반응형 디자인을 완성합니다.
 
 ### 실습 10-1: 전역 스타일 설정 (src/styles/globals.css)
@@ -952,9 +1068,11 @@ Tailwind CSS로 반응형 디자인을 완성합니다.
 ### 테스트 시나리오
 
 1. **신규 사용자 플로우**
+
    - 회원가입 → 로그인 → 상품 둘러보기 → 장바구니 담기
 
 2. **기존 사용자 플로우**
+
    - 로그인 → 마이페이지 확인 → 장바구니 확인
 
 3. **반응형 테스트**
@@ -973,12 +1091,12 @@ Tailwind CSS로 반응형 디자인을 완성합니다.
 
 ### 배운 것들
 
-- **백엔드**: Node.js, Express.js, MySQL, JWT 인증
+- **백엔드**: Node.js, Express.js, PostgreSQL, JWT 인증
 - **프론트엔드**: Next.js, React, TypeScript, Tailwind CSS
 - **상태 관리**: Zustand
 - **API 통신**: fetch, REST API
 - **보안**: 비밀번호 암호화, JWT 토큰
-- **데이터베이스**: SQL, 관계형 DB 설계
+- **데이터베이스**: SQL, 관계형 DB 설계 (PostgreSQL)
 
 ### 다음 단계 추천
 
@@ -994,7 +1112,7 @@ Tailwind CSS로 반응형 디자인을 완성합니다.
 
 - **Next.js 공식 문서**: https://nextjs.org/docs
 - **Express.js 가이드**: https://expressjs.com/
-- **MySQL 튜토리얼**: https://www.mysqltutorial.org/
+- **PostgreSQL 튜토리얼**: https://www.postgresqltutorial.com/
 - **Tailwind CSS**: https://tailwindcss.com/docs
 
 ---
@@ -1002,41 +1120,55 @@ Tailwind CSS로 반응형 디자인을 완성합니다.
 ## 💡 자주 발생하는 문제와 해결법
 
 ### CORS 오류
+
 ```
 Access to fetch at 'http://localhost:3001/api/products' from origin 'http://localhost:3000' has been blocked by CORS policy
 ```
+
 **해결법**: 백엔드에서 CORS 설정 확인
+
 ```javascript
 // 현재 정답지에서는 모든 origin 허용
 app.use(cors());
 
 // 더 안전한 방법 (운영 환경에서 권장)
-app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
 ```
 
 ### JWT 토큰 오류
+
 ```typescript
 // 토큰 형식 확인
 Authorization: Bearer ${token}
 ```
 
 ### 데이터베이스 연결 오류
+
 ```bash
-# MySQL 서비스 상태 확인
-brew services list | grep mysql
+# PostgreSQL 서비스 상태 확인
+brew services list | grep postgresql
+
+# 또는
+sudo systemctl status postgresql
 ```
 
 ### 환경 변수 오류
+
 ```bash
 # .env 파일 위치와 내용 확인
 cat backend/.env
+
+# DB_PORT=5432 확인
+# DB_USER=postgres 확인
 ```
 
 ---
 
 **🎯 목표**: 이 가이드를 통해 풀스택 개발의 전체 플로우를 이해하고, 스스로 웹 애플리케이션을 만들 수 있게 되는 것!
 
-**화이팅! 🚀** 
+**화이팅! 🚀**

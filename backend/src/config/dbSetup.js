@@ -1,35 +1,35 @@
-// MySQL 데이터베이스 연결을 위한 모듈 (Promise 기반)
+// PostgreSQL 데이터베이스 연결을 위한 모듈
 const pool = require('./db');
-// MySQL 직접 연결을 위한 모듈 (데이터베이스 생성용)
-const mysql = require('mysql2/promise');
+// PostgreSQL 직접 연결을 위한 모듈 (데이터베이스 확인용)
+const { Client } = require('pg');
 
 // 사용자 정보를 저장할 테이블 생성 쿼리
 // - 일반 로그인과 소셜 로그인 모두 지원하도록 설계
 const usersTableQuery = `
   CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,              -- 사용자 고유 ID (자동 증가)
-    email VARCHAR(255) NULL UNIQUE,                 -- 이메일 (소셜로그인 시 NULL 가능)
-    password VARCHAR(255) NULL,                     -- 비밀번호 (소셜로그인 시 NULL)
-    name VARCHAR(255) NOT NULL,                     -- 사용자 이름 (필수)
-    provider VARCHAR(50) NOT NULL DEFAULT 'local',  -- 로그인 방식 (local/google)
-    provider_id VARCHAR(255) NULL,                  -- 소셜 로그인 제공자의 사용자 ID
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 계정 생성 시간
-    UNIQUE KEY provider_unique (provider, provider_id) -- 같은 제공자의 같은 ID 중복 방지
+    id SERIAL PRIMARY KEY,                               -- 사용자 고유 ID (자동 증가)
+    email VARCHAR(255) UNIQUE,                           -- 이메일 (소셜로그인 시 NULL 가능)
+    password VARCHAR(255),                               -- 비밀번호 (소셜로그인 시 NULL)
+    name VARCHAR(255) NOT NULL,                          -- 사용자 이름 (필수)
+    provider VARCHAR(50) NOT NULL DEFAULT 'local',       -- 로그인 방식 (local/google)
+    provider_id VARCHAR(255),                            -- 소셜 로그인 제공자의 사용자 ID
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,      -- 계정 생성 시간
+    CONSTRAINT provider_unique UNIQUE (provider, provider_id) -- 같은 제공자의 같은 ID 중복 방지
   );
 `;
 
 // 상품 정보를 저장할 테이블 생성 쿼리
 const productsTableQuery = `
   CREATE TABLE IF NOT EXISTS products (
-    id INT AUTO_INCREMENT PRIMARY KEY,              -- 상품 고유 ID
-    user_id INT NOT NULL,                          -- 상품 등록자 ID (현재는 관리자)
-    name VARCHAR(255) NOT NULL,                    -- 상품명
-    description TEXT,                              -- 상품 설명
-    price DECIMAL(10, 2) NOT NULL,                 -- 가격 (소수점 2자리까지)
-    image_url VARCHAR(255),                        -- 상품 이미지 URL
-    stock INT NOT NULL DEFAULT 0,                  -- 재고 수량
-    category VARCHAR(100) DEFAULT 'general',       -- 상품 카테고리
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 등록 시간
+    id SERIAL PRIMARY KEY,                               -- 상품 고유 ID
+    user_id INTEGER NOT NULL,                            -- 상품 등록자 ID (현재는 관리자)
+    name VARCHAR(255) NOT NULL,                          -- 상품명
+    description TEXT,                                    -- 상품 설명
+    price NUMERIC(10, 2) NOT NULL,                       -- 가격 (소수점 2자리까지)
+    image_url VARCHAR(255),                              -- 상품 이미지 URL
+    stock INTEGER NOT NULL DEFAULT 0,                    -- 재고 수량
+    category VARCHAR(100) DEFAULT 'general',             -- 상품 카테고리
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,      -- 등록 시간
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE -- 사용자 삭제 시 상품도 함께 삭제
   );
 `;
@@ -37,14 +37,14 @@ const productsTableQuery = `
 // 장바구니 정보를 저장할 테이블 생성 쿼리
 const cartTableQuery = `
   CREATE TABLE IF NOT EXISTS cart (
-    id INT AUTO_INCREMENT PRIMARY KEY,              -- 장바구니 항목 고유 ID
-    user_id INT NOT NULL,                          -- 사용자 ID
-    product_id INT NOT NULL,                       -- 상품 ID
-    quantity INT NOT NULL DEFAULT 1,               -- 수량
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 장바구니 추가 시간
+    id SERIAL PRIMARY KEY,                               -- 장바구니 항목 고유 ID
+    user_id INTEGER NOT NULL,                            -- 사용자 ID
+    product_id INTEGER NOT NULL,                         -- 상품 ID
+    quantity INTEGER NOT NULL DEFAULT 1,                 -- 수량
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,      -- 장바구니 추가 시간
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,     -- 사용자 삭제 시 장바구니도 삭제
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE, -- 상품 삭제 시 장바구니에서도 삭제
-    UNIQUE KEY user_product (user_id, product_id)  -- 같은 사용자가 같은 상품을 중복 추가 방지
+    CONSTRAINT user_product UNIQUE (user_id, product_id)  -- 같은 사용자가 같은 상품을 중복 추가 방지
   );
 `;
 
@@ -52,20 +52,36 @@ const cartTableQuery = `
 const setupDatabase = async () => {
   let connection;
   try {
-    // 1단계: 데이터베이스가 존재하지 않으면 생성
-    // 데이터베이스를 지정하지 않고 MySQL 서버에 연결
-    const tempConnection = await mysql.createConnection({
-        host: process.env.DB_HOST,     // MySQL 서버 주소
-        user: process.env.DB_USER,     // MySQL 사용자명
-        password: process.env.DB_PASSWORD, // MySQL 비밀번호
+    // 1단계: 데이터베이스가 존재하는지 확인
+    // PostgreSQL은 사용자가 미리 데이터베이스를 생성해야 합니다
+    const tempClient = new Client({
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT || 5432,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: 'postgres', // 기본 postgres DB에 연결
     });
     
-    // 데이터베이스가 없으면 생성 (IF NOT EXISTS로 중복 생성 방지)
-    await tempConnection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\`;`);
-    await tempConnection.end(); // 임시 연결 종료
+    await tempClient.connect();
+    
+    // 데이터베이스 존재 여부 확인
+    const dbCheckResult = await tempClient.query(
+      `SELECT 1 FROM pg_database WHERE datname = $1`,
+      [process.env.DB_NAME]
+    );
+    
+    if (dbCheckResult.rows.length === 0) {
+      // 데이터베이스가 없으면 생성
+      await tempClient.query(`CREATE DATABASE ${process.env.DB_NAME}`);
+      console.log(`Database '${process.env.DB_NAME}' created.`);
+    } else {
+      console.log(`Database '${process.env.DB_NAME}' exists.`);
+    }
+    
+    await tempClient.end(); // 임시 연결 종료
 
     // 2단계: 생성된 데이터베이스에 연결하여 테이블 생성
-    connection = await pool.getConnection();
+    connection = await pool.connect();
     console.log('Connected to the database.');
 
     // 사용자 테이블 생성
@@ -73,11 +89,11 @@ const setupDatabase = async () => {
     console.log('Users table is ready.');
 
     // 3단계: 샘플 사용자 데이터 삽입 (테이블이 비어있을 경우에만)
-    const [users] = await connection.query('SELECT COUNT(*) as count FROM users');
-    if (users[0].count === 0) {
+    const usersResult = await connection.query('SELECT COUNT(*) as count FROM users');
+    if (parseInt(usersResult.rows[0].count) === 0) {
       // 테스트용 사용자 계정 생성 (실제 운영에서는 해시된 비밀번호 사용 필요)
       await connection.query(
-        "INSERT INTO users (email, password, name) VALUES (?, ?, ?)",
+        "INSERT INTO users (email, password, name) VALUES ($1, $2, $3)",
         ['test@example.com', 'hashedpassword', 'Test User']
       );
       console.log('Sample user inserted.');
@@ -92,11 +108,11 @@ const setupDatabase = async () => {
     console.log('Cart table is ready.');
 
     // 4단계: 샘플 상품 데이터 삽입 (테이블이 비어있을 경우에만)
-    const [products] = await connection.query('SELECT COUNT(*) as count FROM products');
-    if (products[0].count === 0) {
+    const productsResult = await connection.query('SELECT COUNT(*) as count FROM products');
+    if (parseInt(productsResult.rows[0].count) === 0) {
       // 샘플 사용자 ID 조회 (상품 등록자로 사용)
-      const [sampleUser] = await connection.query("SELECT id FROM users WHERE email = 'test@example.com'");
-      const userId = sampleUser[0].id;
+      const sampleUserResult = await connection.query("SELECT id FROM users WHERE email = $1", ['test@example.com']);
+      const userId = sampleUserResult.rows[0].id;
       
       // 다양한 카테고리의 샘플 상품들 정의
       const sampleProducts = [
@@ -154,12 +170,12 @@ const setupDatabase = async () => {
           stock: 60,
           category: 'shoes'
         }
-             ];
+      ];
 
       // 각 샘플 상품을 데이터베이스에 삽입
       for (const product of sampleProducts) {
         await connection.query(
-          'INSERT INTO products (user_id, name, description, price, image_url, stock, category) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO products (user_id, name, description, price, image_url, stock, category) VALUES ($1, $2, $3, $4, $5, $6, $7)',
           [product.user_id, product.name, product.description, product.price, product.image_url, product.stock, product.category]
         );
       }
@@ -180,4 +196,4 @@ const setupDatabase = async () => {
 };
 
 // 다른 파일에서 이 함수를 import할 수 있도록 내보내기
-module.exports = setupDatabase; 
+module.exports = setupDatabase;
