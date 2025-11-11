@@ -138,19 +138,39 @@ git remote set-url origin https://github.com/username/repo.git
 
 ---
 
-### 2. 프로젝트 실행하기
+### 2. npm 환경 생성하기
 
-상세한 실행 방법은 **[Howtomake.md](./Howtomake.md)** 파일을 참고하세요!
+```bash
+# 백엔드 의존성 설치
+cd backend
+npm install
 
-간단 요약:
+# 프론트엔드 의존성 설치
+cd ../frontend
+npm install
+```
+
+### 3. 구현하기
+
+TODO 주석이 있는 파일들을 열어서 코드를 작성하세요!
+
+자세한 구현 가이드는 아래 **"학습 가이드"** 섹션과 **[Howtomake.md](./Howtomake.md)** 파일을 참고하세요.
+
+### 4. 완성 후 테스트하기
+
+코드를 다 구현한 후, 정상 작동하는지 테스트해보세요:
 
 ```bash
 # 1. 백엔드 실행
-cd backend && npm install && npm run dev
+cd backend
+npm run dev
 
 # 2. 프론트엔드 실행 (새 터미널)
-cd frontend && npm install && npm run dev
+cd frontend
+npm run dev
 ```
+
+✅ 브라우저에서 `http://localhost:3000` 접속하여 확인!
 
 ---
 
